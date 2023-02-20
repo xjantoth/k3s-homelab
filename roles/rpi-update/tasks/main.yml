@@ -11,6 +11,15 @@
   tags:
     - update
 
+- name: Activating cgroup support
+  lineinfile:
+    path: /boot/cmdline.txt
+    regexp: '^((?!.*\bcgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory\b).*)$'
+    line: '\1 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory'
+    backrefs: true
+  notify: reboot
+
+
 - name: Reboot # Reboot debian based hosts (including raspbian, ubuntu etc).
   shell: nohup bash -c "/bin/sleep 5 && /sbin/shutdown -r now" &
   become: true

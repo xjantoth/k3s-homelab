@@ -3,11 +3,16 @@
   gather_facts: yes
   become: yes
   roles:
-    - k3s-initial
-
+    - rpi-update
 
 - hosts: gitlab
   gather_facts: yes
   become: yes
   roles:
     - gitlab
+
+- hosts: all
+  gather_facts: yes
+  become: yes
+  roles:
+    - k3s

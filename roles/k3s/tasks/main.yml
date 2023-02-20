@@ -1,0 +1,69 @@
+- name: download k3sup binary
+  get_url:  
+    url: "https://get.k3sup.dev"
+    dest: "/opt/k3sup.sh"
+    force: true
+    mode: 'u+x'
+  when: inventory_hostname in groups.get('master')
+  tags:
+    - k3s
+
+# - name: add executable ~/k3sup.sh
+#   ansible.builtin.file:
+#     dest: ~/k3sup.sh
+#     mode: 'u+x'
+#   tags:
+
+    
+- name: Execute the ~/k3sup.sh
+  shell: "/opt/k3sup.sh"
+  tags:
+    - k3s
+
+# - name: create k3s control plane
+#   debug: var={{ groups['master'] | to_json}}
+#   when: inventory_hostname in groups.get('master')
+#   tags:
+#     - k3sx
+
+# SSH Private key is copied to 'control plane' node to be able to ssh on itself and start k3s
+- name: Creates directory
+  file:
+    path: /root/.ssh
+    state: directory
+  tags:
+    - k3s
+
+- name: Copy private ssh key to ~/.ssh
+  copy:
+    src: "{{ ansible_ssh_private_key_file }}" 
+    dest: "/root/.ssh/manjaro-rpi" 
+    force: True
+    backup: True
+  register: ssh_imported
+  when: inventory_hostname in groups.get('master')
+  tags:
+    - k3s
+
+- name: create k3s control plane
+  command:
+  args:
+    argv:
+      - k3sup
+      - install
+      - --ip 
+      - "{{ ansible_host }}"
+      - --ssh-key
+      - "{{ ansible_ssh_private_key_file }}"
+      - --k3s-version 
+      - "{{ k3s_version }}"
+      - --user 
+      - "{{ ansible_user }}"
+      - --k3s-extra-args 
+      - "--advertise-address {{ ansible_host }} --no-deploy servicelb --no-deploy traefik"
+    creates: "{{playbook_dir}}/kubeconfig"
+  when: inventory_hostname in groups.get('master')
+  tags:
+    - k3s
+
+

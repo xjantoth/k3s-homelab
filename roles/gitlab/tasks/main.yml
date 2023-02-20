@@ -8,15 +8,21 @@
     - ca-certificates 
     - apt-transport-https 
     - perl
+  tags:
+    - gitlab
 
 - name: add the GitLab package repository and install the package
   get_url:  
     url: "https://packages.gitlab.com/install/repositories/gitlab/raspberry-pi2/script.deb.sh"
     dest: "/opt/script.deb.sh"
     mode: 755
+  tags:
+    - gitlab
     
 - name: Execute the script.deb.sh
   shell: /opt/script.deb.sh
+  tags:
+    - gitlab
 
 - name: add IPv4 address gitlab
   lineinfile:
@@ -24,6 +30,8 @@
     regexp: '.*{{ ansible_host }}$'
     line: "{{ ansible_host }} gitlab.local"
     state: present
+  tags:
+    - gitlab
 
 - name: install gitlab-ce
   package:
@@ -31,5 +39,7 @@
     state: present
   environment:
     EXTERNAL_URL: "http://gitlab.local"
+  tags:
+    - gitlab
 
 
