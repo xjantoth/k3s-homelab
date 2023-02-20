@@ -1,0 +1,23 @@
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - update
+
+- name: Update all packages to the latest version
+  apt:
+    upgrade: dist
+  tags:
+    - update
+
+- name: Reboot # Reboot debian based hosts (including raspbian, ubuntu etc).
+  shell: nohup bash -c "/bin/sleep 5 && /sbin/shutdown -r now" &
+  become: true
+  tags:
+    - update
+
+- name: Wait # Wait for hosts to reboot.
+  wait_for_connection: timeout=300 delay=30
+  tags:
+    - update

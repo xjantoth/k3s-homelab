@@ -1,0 +1,13 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: yes
+  roles:
+    - k3s-initial
+
+
+- hosts: gitlab
+  gather_facts: yes
+  become: yes
+  roles:
+    - gitlab

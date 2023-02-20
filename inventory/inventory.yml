@@ -1,0 +1,17 @@
+---
+nodes:
+  hosts:
+    gitlab:
+      ansible_host: 192.168.0.241
+      hostname: rpi-4-8gb-0
+      ansible_user: pi
+      ansible_ssh_private_key_file: ~/.ssh/manjaro-rpi
+master:
+  hosts:
+    main:
+      ansible_host: 192.168.0.248
+      hostname: rpi-4-8gb-1
+      ansible_user: pi
+      ansible_ssh_private_key_file: ~/.ssh/manjaro-rpi
+
+
