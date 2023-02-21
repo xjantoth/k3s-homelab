@@ -1,0 +1,55 @@
+- name: install required nano package
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nfs-kernel-server
+    - rpcbind
+  tags:
+    - nfs
+
+- name: Creates directory /opt/nfs
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/nfs
+    - /opt/nfs/mac-backups
+  tags:
+    - nfs
+
+- name: mount segragete disk
+  blockinfile:
+    path: /etc/fstab
+    state: present
+    block: |
+      PARTUUID={{ segragete_partuuid }}   /opt/nfs ntfs defaults,noatime,nodiratime           0   2
+  tags:
+    - nfs
+
+- name: make entry in /etc/exports
+  blockinfile:
+    path: /etc/exports
+    state: present
+    block: |
+      /opt/nfs/mac-backups *(rw,sync,no_subtree_check,no_root_squash)
+  tags:
+    - nfs
+
+- name: restart nfs-kernel-server
+  service:
+    name: "{{ item }}"
+    state: "started"
+    enabled: true
+  with_items:
+    - nfs-server
+    - nfs-kernel-server
+    - rpc-statd
+  tags:
+    - nfs
+
+- name: exportfs -ar
+  command: exportfs -ar
+  tags:
+    - nfs
+

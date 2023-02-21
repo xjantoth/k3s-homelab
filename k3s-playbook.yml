@@ -16,3 +16,9 @@
   become: yes
   roles:
     - k3s
+
+- hosts: nodes
+  gather_facts: yes
+  become: yes
+  roles:
+    - nfs
