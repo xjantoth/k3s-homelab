@@ -14,16 +14,25 @@
     state: directory
   with_items:
     - /opt/nfs
-    - /opt/nfs/mac-backups
   tags:
     - nfs
 
-- name: mount segragete disk
-  blockinfile:
-    path: /etc/fstab
-    state: present
-    block: |
-      PARTUUID={{ segragete_partuuid }}   /opt/nfs ntfs defaults,noatime,nodiratime           0   2
+- name: mount segragate disk
+  ansible.posix.mount:
+    path: /opt/nfs
+    src: PARTUUID={{ segragete_partuuid }} 
+    fstype: ntfs
+    opts: defaults,noatime,nodiratime 
+    state: mounted
+  tags:
+    - nfs
+
+- name: Creates directory /opt/nfs/mac-backups
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/nfs/mac-backups
   tags:
     - nfs
 
