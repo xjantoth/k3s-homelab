@@ -1,19 +1,15 @@
-- name: install required nano package
-  package:
-    name: "{{ item }}"
+- name: add IPv4 address gitlab
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ ansible_host }}$'
+    line: "{{ ansible_host }} gitlab.local"
     state: present
-  with_items:
-    - curl 
-    - openssh-server 
-    - ca-certificates 
-    - apt-transport-https 
-    - perl
   tags:
     - gitlab
 
 - name: add the GitLab package repository and install the package
   get_url:  
-    url: "https://packages.gitlab.com/install/repositories/gitlab/raspberry-pi2/script.deb.sh"
+    url: "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh"
     dest: "/opt/script.deb.sh"
     mode: 755
   tags:
@@ -24,12 +20,48 @@
   tags:
     - gitlab
 
-- name: add IPv4 address gitlab
-  lineinfile:
-    dest: /etc/hosts
-    regexp: '.*{{ ansible_host }}$'
-    line: "{{ ansible_host }} gitlab.local"
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - gitlab
+
+- name: install required nano package
+  package:
+    name: "{{ item }}"
     state: present
+  with_items:
+    - curl 
+    - openssh-server 
+    - ca-certificates 
+    - apt-transport-https 
+    - perl
+    - debian-archive-keyring
+    - gnupg
+  tags:
+    - gitlab
+
+- name: adding gpg keys for gitlab-ce
+  ansible.builtin.apt_key:
+    url: https://packages.gitlab.com/gitlab/gitlab-ce/gpgkey
+    state: present
+  tags:
+    - gitlab
+
+- name: create a new apt list file
+  ansible.builtin.blockinfile:
+    dest: "/etc/apt/sources.list.d/gitlab_gitlab-ce.list"
+    block: |
+      deb https://packages.gitlab.com/gitlab/gitlab-ce/debian/ buster main
+      deb-src https://packages.gitlab.com/gitlab/gitlab-ce/debian/ buster main
+  tags:
+    - gitlab
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
   tags:
     - gitlab
 
@@ -41,5 +73,6 @@
     EXTERNAL_URL: "http://gitlab.local"
   tags:
     - gitlab
+    - install-gitlab
 
 

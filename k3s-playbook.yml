@@ -11,14 +11,20 @@
   roles:
     - gitlab
 
+- hosts: nodes
+  gather_facts: yes
+  become: yes
+  roles:
+    - nfs
+
 - hosts: all
   gather_facts: yes
   become: yes
   roles:
     - k3s
 
-- hosts: nodes
+- hosts: master
   gather_facts: yes
   become: yes
   roles:
-    - nfs
+    - k3s-gitlab-runners

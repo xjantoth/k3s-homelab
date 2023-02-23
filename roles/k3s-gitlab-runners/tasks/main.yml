@@ -1,0 +1,71 @@
+- name: install required nano package
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python3-pip
+  tags:
+    - runner
+
+- name: install pip deps
+  ansible.builtin.pip:
+    name: "{{ item }}"
+  with_items:
+    - pyyaml
+  tags:
+    - runner
+
+- name: create .bashrc
+  template:
+    src: bashrc.j2
+    dest: /root/.bashrc
+
+- name: download helm binary
+  get_url:  
+    url: "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
+    dest: "/opt/get-helm-3.sh"
+    force: true
+    mode: 'u+x'
+  when: inventory_hostname in groups.get('master')
+  tags:
+    - runner
+
+- name: execute helm binary
+  shell: "/opt/get-helm-3.sh"
+  when: inventory_hostname in groups.get('master')
+  tags:
+    - runner
+
+- name: Add a repository
+  kubernetes.core.helm_repository:
+    name: gitlab
+    repo_url: "https://charts.gitlab.io"
+  tags:
+    - runner
+
+- name: deploy Gitlab runners
+  kubernetes.core.helm:
+    name: test
+    chart_ref: gitlab/gitlab-runner
+    release_namespace: default
+    create_namespace: true
+    values:
+      runnerRegistrationToken: fM2sQXvS6BAaE3jRpRv1
+      gitlabUrl: "http://{{ hostvars[groups['nodes'].0].ansible_host }}"
+      rbac:
+        create: true
+      runners:
+        helpers:
+          image: "docker.io/gitlab/gitlab-runner-helper:ubuntu-arm64-v15.9.1"
+        config: |
+          [[runners]]
+            [runners.kubernetes]
+              helper_cpu_limit = "250m"
+              image = "docker.io/gitlab/gitlab-runner-helper:ubuntu-arm64-v15.9.1"
+              url = "http://{{ hostvars[groups['nodes'].0].ansible_host }}"
+  tags:
+    - runner
+    - deploy-runner
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+# helm install --namespace <NAMESPACE> gitlab-runner -f <CONFIG_VALUES_FILE> gitlab/gitlab-runner

@@ -8,22 +8,17 @@
   tags:
     - k3s
 
-# - name: add executable ~/k3sup.sh
-#   ansible.builtin.file:
-#     dest: ~/k3sup.sh
-#     mode: 'u+x'
-#   tags:
+- name: create .bashrc
+  template:
+    src: bashrc.j2
+    dest: /root/.bashrc
+  tags:
+    - k3s
 
 - name: Execute the ~/k3sup.sh
   shell: "/opt/k3sup.sh"
   tags:
     - k3s
-
-# - name: create k3s control plane
-#   debug: var={{ groups['master'] | to_json}}
-#   when: inventory_hostname in groups.get('master')
-#   tags:
-#     - k3sx
 
 # SSH Private key is copied to 'control plane' node to be able to ssh on itself and start k3s
 - name: Creates directory
