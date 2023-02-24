@@ -43,6 +43,14 @@
   tags:
     - runner
 
+- name: make k3s coredns aware of gitlab.local entry
+  lineinfile:
+    dest: "/var/lib/rancher/k3s/server/manifests/coredns.yaml"
+    insertbefore: '        kubernetes cluster.local in-addr.arpa ip6.arpa {'
+    line: "        rewrite name gitlab.local {{ hostvars[groups['nodes'].0].ansible_host }}"
+  tags:
+    - k3ss
+
 - name: deploy Gitlab runners
   kubernetes.core.helm:
     name: test
