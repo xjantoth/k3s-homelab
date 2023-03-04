@@ -28,3 +28,4 @@
   become: yes
   roles:
     - k3s-gitlab-runners
+    - k3s-helm-deployments

@@ -1,0 +1,113 @@
+- name: add helm chart repositories
+  kubernetes.core.helm_repository:
+    name: "{{ item.name }}"
+    repo_url: "{{ item.url }}"
+  with_items:
+    - { name: 'grafana', url: 'https://grafana.github.io/helm-charts' }
+    - { name: 'nginx', url: 'https://kubernetes.github.io/ingress-nginx' }
+    - { name: 'prometheus', url: 'https://prometheus-community.github.io/helm-charts'}
+  tags:
+    - nginx
+    - helm
+
+- name: deploy Nginx Ingress Controller
+  kubernetes.core.helm:
+    name: nginx-ingress
+    chart_ref: nginx/ingress-nginx
+    release_namespace: default
+    create_namespace: true
+    release_state: present
+    values:
+      controller:
+        service:
+            nodePorts:
+                http: "30111"
+                https: "30222"
+          
+  tags:
+    - nginx
+    - helm
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+# helm install --namespace <NAMESPACE> gitlab-runner -f <CONFIG_VALUES_FILE> gitlab/gitlab-runner
+
+- name: deploy Grafana
+  kubernetes.core.helm:
+    name: grafana
+    chart_ref: grafana/grafana
+    release_namespace: default
+    create_namespace: true
+    release_state: present
+    values:
+      ingress:
+        enabled: true
+        path: /grafana/?(.*)
+        hosts:
+          - raspberrypi
+        annotations:
+          #nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/rewrite-target: /$1
+          nginx.ingress.kubernetes.io/use-regex: "true"
+          kubernetes.io/ingress.class: nginx
+
+      grafana.ini:
+        server:
+          root_url: "%(protocol)s://%(domain)s/grafana"
+          serve_from_sub_path: true
+      datasources:
+        datasources.yaml:
+          apiVersion: 1
+          datasources:
+          - name: PrometheusRaspberryPiHomeLab
+            type: prometheus
+            url: http://prometheus-server/prometheus
+      dashboards:
+         default:
+           monitoring:
+             gnetId: 12120
+             revision: 3
+             datasource: PrometheusRaspberryPiHomeLab 
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+          - name: 'default'
+            orgId: 1
+            folder: 'default'
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+      persistance:
+        enabled: true
+        type: pvc
+        size: 1Gi
+        storageClassName: local-path
+  tags:
+    - nginx
+    - helm
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+- name: copy patch files
+  copy:
+    src: '{{ item }}'
+    dest: '/opt/{{ item }}'
+  with_items:
+    - grafana-ing.patch
+    - prometheus-ing.patch
+  tags:
+    - nginx
+    - helm
+
+- name: patch grafana ingress
+  command: kubectl patch ingress grafana --patch-file /opt/grafana-ing.patch
+  tags:
+    - nginx
+    - helm
+    - grafana-patch
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+# kubectl patch ingress grafana --patch-file grafana-ing.patch
+# kubectl patch ingress prometheus-server --patch-file prometheus-ing.patch

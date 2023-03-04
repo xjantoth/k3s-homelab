@@ -11,9 +11,14 @@
 - name: create .bashrc
   template:
     src: bashrc.j2
-    dest: /root/.bashrc
+    dest: '{{ item }}'
+  with_items:
+    /home/pi/.bashrc
+    /root/.bashrc
   tags:
     - k3s
+    - bashrc
+
 
 - name: Execute the ~/k3sup.sh
   shell: "/opt/k3sup.sh"

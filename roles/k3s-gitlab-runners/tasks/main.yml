@@ -15,11 +15,6 @@
   tags:
     - runner
 
-- name: create .bashrc
-  template:
-    src: bashrc.j2
-    dest: /root/.bashrc
-
 - name: download helm binary
   get_url:  
     url: "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
@@ -49,11 +44,11 @@
     insertbefore: '        kubernetes cluster.local in-addr.arpa ip6.arpa {'
     line: "        rewrite name gitlab.local {{ hostvars[groups['nodes'].0].ansible_host }}"
   tags:
-    - k3ss
+    - runner
 
 - name: deploy Gitlab runners
   kubernetes.core.helm:
-    name: test
+    name: gitlab-runner
     chart_ref: gitlab/gitlab-runner
     release_namespace: default
     create_namespace: true
