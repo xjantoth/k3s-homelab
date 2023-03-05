@@ -64,8 +64,8 @@
       dashboards:
          default:
            monitoring:
-             gnetId: 12120
-             revision: 3
+             gnetId:  15120
+             revision: 11
              datasource: PrometheusRaspberryPiHomeLab 
       dashboardProviders:
         dashboardproviders.yaml:
@@ -78,7 +78,7 @@
             disableDeletion: false
             editable: true
             options:
-              path: /var/lib/grafana/dashboards/default
+              path: /var/lib/grafana/dashboards
       persistance:
         enabled: true
         type: pvc
@@ -87,6 +87,7 @@
   tags:
     - nginx
     - helm
+    - grafana
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
 
@@ -107,7 +108,64 @@
     - nginx
     - helm
     - grafana-patch
+    - grafana
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
 # kubectl patch ingress grafana --patch-file grafana-ing.patch
 # kubectl patch ingress prometheus-server --patch-file prometheus-ing.patch
+
+- name: deploy Prometheus
+  kubernetes.core.helm:
+    name: prometheus
+    chart_ref: prometheus/prometheus
+    release_namespace: default
+    create_namespace: true
+    release_state: present
+    values:
+      alertmanager:
+        enabled: false
+      kubeStateMetrics:
+        enabled: false
+      pushgateway:
+        enabled: false
+      nodeExporter:
+        enabled: false
+      server:
+        ingress:
+          enabled: true
+          path: /prometheus
+          hosts:
+            - raspberrypi
+          annotations:
+            #nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            #nginx.ingress.kubernetes.io/rewrite-target: /$1
+            nginx.ingress.kubernetes.io/use-regex: "true"
+            kubernetes.io/ingress.class: nginx
+
+        ## Prometheus server container name
+        prefixURL: /prometheus
+        extraFlags:
+          - web.enable-lifecycle
+          - web.external-url=/prometheus
+        persistentVolume:
+          enabled: true
+          storageClass: local-path
+          size: 2Gi
+  tags:
+    - nginx
+    - helm
+    - prometheus
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+- name: patch prometheus ingress
+  command: kubectl patch ingress prometheus-server --patch-file /opt/prometheus-ing.patch
+  tags:
+    - nginx
+    - helm
+    - prometheus-patch
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+# kubectl patch ingress grafana --patch-file grafana-ing.patch
+# kubectl patch ingress prometheus-server --patch-file prometheus-ing.patch
+
