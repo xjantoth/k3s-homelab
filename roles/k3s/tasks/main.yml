@@ -8,18 +8,6 @@
   tags:
     - k3s
 
-- name: create .bashrc
-  template:
-    src: bashrc.j2
-    dest: '{{ item }}'
-  with_items:
-    /home/pi/.bashrc
-    /root/.bashrc
-  tags:
-    - k3s
-    - bashrc
-
-
 - name: Execute the ~/k3sup.sh
   shell: "/opt/k3sup.sh"
   tags:

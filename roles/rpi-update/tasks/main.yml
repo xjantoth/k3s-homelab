@@ -31,3 +31,79 @@
   wait_for_connection: timeout=300 delay=30
   tags:
     - update
+
+- name: install required packages vim and zsh
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - vim
+    - zsh
+    - zsh-autosuggestions
+    - zsh-syntax-highlighting
+    - fzf
+  tags:
+    - packages
+    - common
+
+- name: Set zsh as default shell
+  user:
+    name: "{{ item }}"
+    shell: /bin/zsh
+  with_items:
+    - pi
+    - root
+  tags:
+    - common
+
+- name: copy zshrc file
+  copy:
+    src: '.zshrc'
+    dest: '{{ item.path }}'
+    owner: "{{ item.user }}"
+    group: "{{ item.user }}"
+  with_items:
+    - { user: 'pi', path: '/home/pi/.zshrc' }
+    - { user: 'root', path: '/root/.zshrc' }
+  tags:
+    - zshrc
+    - common
+
+- name: creates directory
+  file:
+    path: '{{ item.fzf }}'
+    state: directory
+    owner: "{{ item.user }}"
+    group: "{{ item.user }}"
+  with_items:
+    - { user: 'pi', fzf: '/home/pi/.fzf' }
+    - { user: 'root', fzf: '/root/.fzf' }
+  tags:
+    - fzf
+    - common
+
+- name: copy completion and key-bindings files
+  copy:
+    src: '{{ item.path }}'
+    dest: '{{ item.fzf_dir }}'
+    remote_src: yes
+    owner: "{{ item.user }}"
+    group: "{{ item.user }}"
+  with_items:
+    - { user: 'pi', path: '/usr/share/doc/fzf/examples/completion.zsh', fzf_dir: '/home/pi/.fzf' }
+    - { user: 'pi', path: '/usr/share/doc/fzf/examples/key-bindings.zsh', fzf_dir: '/home/pi/.fzf' }
+    - { user: 'root', path: '/usr/share/doc/fzf/examples/completion.zsh', fzf_dir: '/root/.fzf' }
+    - { user: 'root', path: '/usr/share/doc/fzf/examples/key-bindings.zsh', fzf_dir: '/root/.fzf' }
+  tags:
+    - fzf
+    - common
+
+# - name: create .zshrc
+#   template:
+#     src: "{{ role_path }}/files/.zshrc"
+#     dest: "{{ path }}"
+#     owner: "{{ user }}"
+#     group: "{{ user }}"
+#   with_items:
+
+
