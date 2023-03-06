@@ -1,0 +1,11 @@
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: longhorn-frontend
+            port:
+              number: 80
+        path: /longhorn(/|$)(.*)
+        pathType: Prefix

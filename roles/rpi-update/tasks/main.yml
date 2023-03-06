@@ -42,9 +42,20 @@
     - zsh-autosuggestions
     - zsh-syntax-highlighting
     - fzf
+    - open-iscsi
   tags:
     - packages
     - common
+    - longhorn
+
+- name: start iscsid service
+  systemd:
+    name: iscsid
+    state: started
+    enabled: true
+    daemon_reload: true
+  tags:
+    - longhorn
 
 - name: Set zsh as default shell
   user:

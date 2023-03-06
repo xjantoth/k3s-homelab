@@ -30,10 +30,28 @@ source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 
-autoload -Uz compinit promptinit
+autoload -U colors && colors    # Load colors
+autoload -Uz compinit promptinit vcs_info
+
 compinit
 promptinit
+# ------------------------------------------------------------------------------
+# Customize PROMPT
+# ------------------------------------------------------------------------------
 
+precmd_vcs_info() {
+  vcs_info
+}
+precmd_functions+=(precmd_vcs_info)
+#setopt prompt_subst
+setopt PROMPT_SUBST
+PROMPT='%F{green}%n@%m%f %F{blue}%~%f %F{red}${vcs_info_msg_0_}%f$ '
+#export PROMPT="%F{196}%B%(?..?%? )%b%f%F{117}%2~%f%F{245} %#%f %B\$vcs_info_msg_0_%f%b "
+#export RPROMPT="%B\$vcs_info_msg_0_%f%b"
+
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:git:*' formats '%F{240}%b%u %f %F{237}%r%f'
+zstyle ':vcs_info:*' enable git
 # This will set the default prompt to the walters theme
 
 [[ $commands[kubectl] ]] && source <(kubectl completion zsh)

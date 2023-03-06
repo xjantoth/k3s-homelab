@@ -6,9 +6,11 @@
     - { name: 'grafana', url: 'https://grafana.github.io/helm-charts' }
     - { name: 'nginx', url: 'https://kubernetes.github.io/ingress-nginx' }
     - { name: 'prometheus', url: 'https://prometheus-community.github.io/helm-charts'}
+    - { name: 'longhorn', url: 'https://charts.longhorn.io'}
   tags:
     - nginx
     - helm
+    - helm-repos
 
 - name: deploy Nginx Ingress Controller
   kubernetes.core.helm:
@@ -79,11 +81,14 @@
             editable: true
             options:
               path: /var/lib/grafana/dashboards
-      persistance:
-        enabled: true
+      persistence:
         type: pvc
-        size: 1Gi
+        enabled: true
         storageClassName: local-path
+        accessModes:
+          - ReadWriteOnce
+        size: 1Gi
+
   tags:
     - nginx
     - helm
@@ -98,9 +103,12 @@
   with_items:
     - grafana-ing.patch
     - prometheus-ing.patch
+    - longhorn-ing.patch
   tags:
     - nginx
     - helm
+    - longhorn-patch
+    - longhorn-deployment
 
 - name: patch grafana ingress
   command: kubectl patch ingress grafana --patch-file /opt/grafana-ing.patch
@@ -169,3 +177,55 @@
 # kubectl patch ingress grafana --patch-file grafana-ing.patch
 # kubectl patch ingress prometheus-server --patch-file prometheus-ing.patch
 
+- name: deploy longhorn
+  kubernetes.core.helm:
+    name: longhorn
+    chart_ref: longhorn/longhorn
+    release_namespace: longhorn-system
+    create_namespace: true
+    release_state: present
+    values:
+      csi:
+        attacherReplicaCount: 1
+        provisionerReplicaCount: 1
+        resizerReplicaCount: 1
+        snapshotterReplicaCount: 1
+      defaultSettings:
+        concurrentReplicaRebuildPerNodeLimit: 2
+        defaultReplicaCount: 1
+        guaranteedEngineManagerCPU: 4
+        guaranteedReplicaManagerCPU: 4
+      image:
+        defaultImage: true
+      longhorn:
+        default_setting: true
+      persistence:
+        defaultClass: true
+        defaultFsType: ext4
+        defaultClassReplicaCount: 1
+        defaultDataLocality: disabled # best-effort otherwise
+        reclaimPolicy: Delete
+      ingress:
+      ## Set to true to enable ingress record generation
+        enabled: true
+        host: raspberrypi
+        path: /longhorn(/|$)(.*)
+        annotations:
+            # nginx.ingress.kubernetes.io/use-regex: "true"
+            kubernetes.io/ingress.class: nginx
+            nginx.ingress.kubernetes.io/rewrite-target: /$2
+  tags:
+    - longhorn
+    - longhorn-deployment
+    - helm
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+
+- name: patch longhorn ingress
+  command: kubectl patch ingress longhorn-ingress --patch-file /opt/longhorn-ing.patch -n longhorn-system
+  tags:
+    - helm
+    - longhorn-patch
+    - longhorn-deployment
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"

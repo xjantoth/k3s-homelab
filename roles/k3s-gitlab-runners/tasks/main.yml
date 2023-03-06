@@ -46,6 +46,15 @@
   tags:
     - runner
 
+- name: make k3s local-storage reclaimPolicy to be Retain
+  replace:
+    path: "/var/lib/rancher/k3s/server/manifests/local-storage.yaml"
+    regexp: "reclaimPolicy: Delete"
+    replace: "reclaimPolicy: Retain"
+  tags:
+    - runner
+    - local-storage
+
 - name: deploy Gitlab runners
   kubernetes.core.helm:
     name: gitlab-runner
