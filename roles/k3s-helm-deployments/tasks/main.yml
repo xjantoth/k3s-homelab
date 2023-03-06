@@ -25,7 +25,6 @@
             nodePorts:
                 http: "30111"
                 https: "30222"
-          
   tags:
     - nginx
     - helm
@@ -84,7 +83,7 @@
       persistence:
         type: pvc
         enabled: true
-        storageClassName: local-path
+        storageClassName: longhorn
         accessModes:
           - ReadWriteOnce
         size: 1Gi
@@ -132,11 +131,11 @@
     values:
       alertmanager:
         enabled: false
-      kubeStateMetrics:
+      kube-state-metrics:
         enabled: false
-      pushgateway:
+      prometheus-pushgateway:
         enabled: false
-      nodeExporter:
+      prometheus-node-exporter:
         enabled: false
       server:
         ingress:
@@ -157,7 +156,7 @@
           - web.external-url=/prometheus
         persistentVolume:
           enabled: true
-          storageClass: local-path
+          storageClass: longhorn
           size: 2Gi
   tags:
     - nginx
@@ -202,9 +201,9 @@
       persistence:
         defaultClass: true
         defaultFsType: ext4
-        defaultClassReplicaCount: 1
+        defaultClassReplicaCount: 2
         defaultDataLocality: disabled # best-effort otherwise
-        reclaimPolicy: Delete
+        reclaimPolicy: Retain
       ingress:
       ## Set to true to enable ingress record generation
         enabled: true
