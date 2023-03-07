@@ -33,6 +33,7 @@
     state: directory
   with_items:
     - /opt/nfs/mac-backups
+    - /opt/nfs/longhorn
   tags:
     - nfs
 
@@ -42,6 +43,7 @@
     state: present
     block: |
       /opt/nfs/mac-backups *(rw,sync,no_subtree_check,no_root_squash)
+      /opt/nfs/longhorn *(rw,sync,no_subtree_check,no_root_squash)
   tags:
     - nfs
 
