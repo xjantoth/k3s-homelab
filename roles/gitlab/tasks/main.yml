@@ -75,4 +75,31 @@
     - gitlab
     - install-gitlab
 
+- name: setup /etc/gitlab/gitlab.rb
+  ansible.builtin.blockinfile:
+    path: /etc/gitlab/gitlab.rb
+    block: |
+      prometheus['enable'] = false
+      alertmanager['enable'] = false
+      node_exporter['enable'] = false
+      postgres_exporter['listen_address'] = '{{ ansible_host }}:9187'
+      redis_exporter['listen_address'] = '{{ ansible_host }}:9121'
+      gitlab_exporter['listen_address'] = '{{ ansible_host }}'
+      gitlab_exporter['listen_port'] = '9168'
+      sidekiq['listen_address'] = "{{ ansible_host }}"
+      sidekiq['listen_port'] = 8082
+
+  tags:
+    - gitlab-reconfigure
+    - gitlab
+    - install-gitlab
+
+- name: gitlab-ctl reconfigure
+  command: gitlab-ctl reconfigure
+  tags:
+    - gitlab-reconfigure
+    - gitlab
+    - install-gitlab
+
+# TODO: pi@rpi-4-8gb-0 ~ $ sudo gitlab-backup create SKIP=tar
 
