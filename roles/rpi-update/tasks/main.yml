@@ -43,10 +43,12 @@
     - zsh-syntax-highlighting
     - fzf
     - open-iscsi
+    - apache2-utils
   tags:
     - packages
     - common
     - longhorn
+  
 
 - name: start iscsid service
   systemd:
@@ -108,6 +110,7 @@
   tags:
     - fzf
     - common
+
 
 # - name: create .zshrc
 #   template:

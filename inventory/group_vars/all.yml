@@ -3,5 +3,9 @@ k3s_version: v1.26.1+k3s1
 ansible_user: pi
 cluster_secret: vscsdgfasljKSmanmxabkklasMSASNBCSAJ
 segragete_partuuid: 3c12ddca-01
+prometheus_user: prometheus
+prometheus_pass: H5QaIG9eXqFWTuDqG29luHtdT
+longhorn_user: longhorn
+longhorn_pass: j9CEvwY4FL3PujdDPfCZ2SIoJ
 # systemd_dir: /etc/systemd/system
 # master_ip: "{{ hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0]) }}"
