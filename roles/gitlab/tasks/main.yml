@@ -94,6 +94,27 @@
     - gitlab
     - install-gitlab
 
+- name: mount gitlab backups /var/opt/gitlab/backups to NFS
+  ansible.posix.mount:
+    path: /var/opt/gitlab/backups
+    src: "{{ ansible_host }}:/opt/nfs/gitlab-baremetal"
+    fstype: nfs
+    opts: defaults,noatime,nodiratime 
+    state: mounted
+  tags:
+    - nfs
+    - nfs-mount
+
+- name:  "Create gitlab backup under /var/opt/gitlab/backups which is mounted over NFS"
+  ansible.builtin.cron:
+    name: "Create gitlab backup under /var/opt/gitlab/backups which is mounted over NFS"
+    minute: "0"
+    hour: "2"
+    job: "gitlab-backup create SKIP=tar"
+  tags:
+    - nfs
+    - nfs-cron
+
 - name: gitlab-ctl reconfigure
   command: gitlab-ctl reconfigure
   tags:

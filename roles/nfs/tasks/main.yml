@@ -34,6 +34,7 @@
   with_items:
     - /opt/nfs/mac-backups
     - /opt/nfs/longhorn
+    - /opt/nfs/gitlab-baremetal
   tags:
     - nfs
 
@@ -44,6 +45,7 @@
     block: |
       /opt/nfs/mac-backups *(rw,sync,no_subtree_check,no_root_squash)
       /opt/nfs/longhorn *(rw,sync,no_subtree_check,no_root_squash)
+      /opt/nfs/gitlab-baremetal *(rw,sync,no_subtree_check,no_root_squash)
   tags:
     - nfs
 

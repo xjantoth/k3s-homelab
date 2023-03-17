@@ -51,14 +51,69 @@
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
 
+
+- name: template configmap data for grafana
+  set_fact:
+    filename: 'dashboard-k3s-0.json'
+# it feels like when changing labels on cm does not tak an affect unless deleted.
+- name: create grafana dashboard from confingmap
+  debug:
+    msg: |-
+      {{ item }}: |
+        {{ lookup("file", item ) | from_yaml | to_json }}
+  tags:
+    - helm
+    - grafana
+    - grafana-dash
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+  with_items:
+    - "dashboard-k3s-0.json"
+
+- name: create grafana dashboard from confingmap
+  kubernetes.core.k8s:
+    state: present
+    namespace: default 
+    definition: 
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: '{{ item | replace(".json", "") }}'
+        labels:
+          grafana_dashboard: "yes"
+      data: '{{ tempo  | from_yaml }}'
+      
+  environment:
+    tempo: |-
+      {{ item }}: |
+        {{ lookup("file", item ) | from_json | to_json }}
+  tags:
+    - helm
+    - grafana
+    - grafana-dash
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+  with_items:
+    - "dashboard-k3s-0.json"
+
 - name: deploy grafana
   kubernetes.core.helm:
     name: grafana
+    chart_version: 6.51.3
     chart_ref: grafana/grafana
     release_namespace: default
     create_namespace: true
     release_state: present
-    values:
+    release_values:
+      sidecar:
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          labelValue: "yes"
+          searchNamespace: "ALL"
+          folder: /var/lib/grafana/dashboards
+      deploymentStrategy:
+        type: Recreate
       ingress:
         enabled: true
         path: /grafana/?(.*)
@@ -72,6 +127,8 @@
         server:
           root_url: "%(protocol)s://%(domain)s/grafana"
           serve_from_sub_path: true
+        log:
+          level: debug
       datasources:
         datasources.yaml:
           apiVersion: 1
@@ -79,12 +136,12 @@
           - name: PrometheusRaspberryPiHomeLab
             type: prometheus
             url: http://prometheus-server/prometheus
-      dashboards:
-         default:
-           monitoring:
-             gnetId:  15120
-             revision: 11
-             datasource: PrometheusRaspberryPiHomeLab 
+      # dashboards:
+      #    default:
+      #      monitoring:
+      #        gnetId: 15282
+      #        revision: 1
+      #        datasource: PrometheusRaspberryPiHomeLab 
       dashboardProviders:
         dashboardproviders.yaml:
           apiVersion: 1
@@ -93,6 +150,7 @@
             orgId: 1
             folder: 'default'
             type: file
+            updateIntervalSeconds: 10
             disableDeletion: false
             editable: true
             options:
@@ -163,7 +221,7 @@
       prometheus-pushgateway:
         enabled: false
       prometheus-node-exporter:
-        enabled: false
+        enabled: true
       server:
         ingress:
           enabled: true
@@ -184,6 +242,30 @@
           enabled: true
           storageClass: longhorn
           size: 2Gi
+          serverFiles:
+      extraScrapeConfigs: |
+        - job_name: postgres_exporter
+          static_configs:
+            - targets:
+              - "{{ hostvars[groups['nodes'].0].ansible_host }}:9187"
+        - job_name: redis_exporter
+          static_configs:
+            - targets:
+              - "{{ hostvars[groups['nodes'].0].ansible_host }}:9121"
+        - job_name: gitlab_exporter
+          static_configs:
+            - targets:
+              - "{{ hostvars[groups['nodes'].0].ansible_host }}:9168"
+        - job_name: sidekiq_exporter
+          static_configs:
+            - targets:
+              - "{{ hostvars[groups['nodes'].0].ansible_host }}:8082"
+      # postgres_exporter['listen_address'] = '{{ ansible_host }}:9187'
+      # redis_exporter['listen_address'] = '{{ ansible_host }}:9121'
+      # gitlab_exporter['listen_address'] = '{{ ansible_host }}'
+      # gitlab_exporter['listen_port'] = '9168'
+      # sidekiq['listen_address'] = "{{ ansible_host }}"
+      # sidekiq['listen_port'] = 8082
   tags:
     - helm
     - prometheus
@@ -195,6 +277,7 @@
   command: kubectl patch ingress prometheus-server --patch-file /opt/prometheus-ing.patch
   tags:
     - helm
+    - prometheus
     - prometheus-patch
     - prometheus-secret
   environment:

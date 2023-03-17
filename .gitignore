@@ -2,3 +2,4 @@ ingress-nginx/
 grafana/
 prometheus/
 longhorn/
+.ansible_password
