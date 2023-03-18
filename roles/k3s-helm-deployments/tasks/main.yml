@@ -52,24 +52,6 @@
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
 
 
-- name: template configmap data for grafana
-  set_fact:
-    filename: 'dashboard-k3s-0.json'
-# it feels like when changing labels on cm does not tak an affect unless deleted.
-- name: create grafana dashboard from confingmap
-  debug:
-    msg: |-
-      {{ item }}: |
-        {{ lookup("file", item ) | from_yaml | to_json }}
-  tags:
-    - helm
-    - grafana
-    - grafana-dash
-  environment:
-    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
-  with_items:
-    - "dashboard-k3s-0.json"
-
 - name: create grafana dashboard from confingmap
   kubernetes.core.k8s:
     state: present
@@ -81,12 +63,9 @@
         name: '{{ item | replace(".json", "") }}'
         labels:
           grafana_dashboard: "yes"
-      data: '{{ tempo  | from_yaml }}'
-      
-  environment:
-    tempo: |-
-      {{ item }}: |
-        {{ lookup("file", item ) | from_json | to_json }}
+      data:
+        dashboard-k3s-0.json: |
+          {{ lookup('file', item ) | from_json | to_json }}
   tags:
     - helm
     - grafana
@@ -241,7 +220,7 @@
         persistentVolume:
           enabled: true
           storageClass: longhorn
-          size: 2Gi
+          size: 40Gi
           serverFiles:
       extraScrapeConfigs: |
         - job_name: postgres_exporter
