@@ -62,7 +62,7 @@
     release_namespace: default
     create_namespace: true
     values:
-      runnerRegistrationToken: fM2sQXvS6BAaE3jRpRv1
+      runnerRegistrationToken: "{{ runnerRegistrationToken }}"
       gitlabUrl: "http://{{ hostvars[groups['nodes'].0].ansible_host }}"
       rbac:
         create: true
