@@ -88,6 +88,12 @@
       gitlab_exporter['listen_port'] = '9168'
       sidekiq['listen_address'] = "{{ ansible_host }}"
       sidekiq['listen_port'] = 8082
+      registry_external_url 'http://registry.gitlab.local:5005'
+      gitlab_rails['registry_enabled'] = true
+      gitlab_rails['registry_host'] = "registry.gitlab.local"
+      gitlab_rails['registry_port'] = "5005"
+      # gitlab_rails['registry_path'] = "/var/opt/gitlab/gitlab-rails/shared/registry"
+      gitlab_rails['manage_backup_path'] = false
 
   tags:
     - gitlab-reconfigure

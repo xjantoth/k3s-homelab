@@ -10,6 +10,7 @@
   tags:
     - helm
     - helm-repos
+    - gl-k3s
 
 - name: install pip deps
   ansible.builtin.pip:
@@ -348,3 +349,4 @@
     - longhorn-secret
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+

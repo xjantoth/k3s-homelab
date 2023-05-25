@@ -3,3 +3,4 @@ grafana/
 prometheus/
 longhorn/
 .ansible_password
+gitlab-omnibus

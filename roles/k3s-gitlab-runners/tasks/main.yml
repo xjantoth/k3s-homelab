@@ -45,6 +45,16 @@
     line: "        rewrite name gitlab.local {{ hostvars[groups['nodes'].0].ansible_host }}"
   tags:
     - runner
+    - coredns
+
+- name: make k3s coredns aware of registry.gitlab.local entry
+  lineinfile:
+    dest: "/var/lib/rancher/k3s/server/manifests/coredns.yaml"
+    insertbefore: '        kubernetes cluster.local in-addr.arpa ip6.arpa {'
+    line: "        rewrite name registry.gitlab.local {{ hostvars[groups['nodes'].0].ansible_host }}"
+  tags:
+    - runner
+    - coredns
 
 - name: make k3s local-storage reclaimPolicy to be Retain
   replace:

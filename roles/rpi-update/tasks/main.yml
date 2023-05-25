@@ -44,10 +44,12 @@
     - fzf
     - open-iscsi
     - apache2-utils
+    - git
   tags:
     - packages
     - common
     - longhorn
+    - git
   
 
 - name: start iscsid service
