@@ -82,18 +82,24 @@
       prometheus['enable'] = false
       alertmanager['enable'] = false
       node_exporter['enable'] = false
-      postgres_exporter['listen_address'] = '{{ ansible_host }}:9187'
-      redis_exporter['listen_address'] = '{{ ansible_host }}:9121'
-      gitlab_exporter['listen_address'] = '{{ ansible_host }}'
+      postgres_exporter['listen_address'] = '192.168.0.241:9187'
+      redis_exporter['listen_address'] = '192.168.0.241:9121'
+      gitlab_exporter['listen_address'] = '192.168.0.241'
       gitlab_exporter['listen_port'] = '9168'
-      sidekiq['listen_address'] = "{{ ansible_host }}"
+      sidekiq['listen_address'] = "192.168.0.241"
       sidekiq['listen_port'] = 8082
-      registry_external_url 'http://registry.gitlab.local:5005'
+      registry_external_url 'https://registry.gitlab.local:5005'
       gitlab_rails['registry_enabled'] = true
       gitlab_rails['registry_host'] = "registry.gitlab.local"
       gitlab_rails['registry_port'] = "5005"
-      # gitlab_rails['registry_path'] = "/var/opt/gitlab/gitlab-rails/shared/registry"
       gitlab_rails['manage_backup_path'] = false
+      letsencrypt['enable'] = false
+      nginx['ssl_certificate'] = "/etc/gitlab/ssl/gitlab.local.crt"
+      nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/gitlab.local.key"
+      nginx['redirect_http_to_https'] = true
+      external_url 'https://gitlab.local'
+
+
 
   tags:
     - gitlab-reconfigure
